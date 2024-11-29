@@ -1,0 +1,42 @@
+#!/usr/bin/bash
+
+# Simple script to manage the dimming and lighting of the keyboard backlight.
+#
+# Author: Jonathan Bowie
+# Name: kbd_light
+# Version: 1.0
+
+$OWNER="j"
+
+idleAfter=5000
+
+dim() {
+	if [[ $curIdle -gt $idleAfter ]]; then
+		curBright=$(cat /sys/class/leds/platform::kbd_backlight/brightness)
+		if [[ $curBright -gt 0 ]]; then
+			while [[ $curBright -gt 0 ]]; do
+				curBright=$((curBright - 1))
+				echo $curBright >/sys/class/leds/platform::kbd_backlight/brightness
+				sleep .75
+			done
+		fi
+
+	else
+		echo $(cat /sys/class/leds/platform::kbd_backlight/max_brightness) >/sys/class/leds/platform::kbd_backlight/brightness
+	fi
+}
+
+die_nice() {
+	curIdle=11111
+	dim
+	exit 0
+}
+
+trap die_nice SIGTERM
+trap die_nice SIGKILL
+trap die_nice SIGINT
+
+while true; do
+	curIdle=$(sudo -n -u $OWNER env DISPLAY=:0 xprintidle)
+	dim
+done
