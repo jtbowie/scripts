@@ -6,12 +6,12 @@
 # Name: kbd_light
 # Version: 1.0
 
-$OWNER="j"
+OWNER="j"
 
 idleAfter=5000
 
 dim() {
-	if [[ $curIdle -gt $idleAfter ]]; then
+	if [ $curIdle -gt $idleAfter ]; then
 		curBright=$(cat /sys/class/leds/platform::kbd_backlight/brightness)
 		if [[ $curBright -gt 0 ]]; then
 			while [[ $curBright -gt 0 ]]; do
@@ -36,7 +36,10 @@ trap die_nice SIGTERM
 trap die_nice SIGKILL
 trap die_nice SIGINT
 
+CMD="sudo -n -u $OWNER env DISPLAY=:0 xprintidle"
 while true; do
-	curIdle=$(sudo -n -u $OWNER env DISPLAY=:0 xprintidle)
-	dim
+	if /usr/bin/checkx >&/dev/null; then
+		curIdle=$($CMD)
+		dim
+	fi
 done
